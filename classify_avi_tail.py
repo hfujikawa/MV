@@ -78,21 +78,47 @@ for idx, video_path in enumerate(video_path_grp):
     rect_w_list_grp.append(rect_w_list)
 
 # https://qiita.com/sotetsuk/items/80c57896735aee4b0306
-min0 = min(rect_w_list_grp[0])
-max0 = max(rect_w_list_grp[0])
-range0 = max0 - min0
-min1 = min(rect_w_list_grp[1])
-max1 = max(rect_w_list_grp[1])
-range1 = max1 - min1
-min2 = min(rect_w_list_grp[2])
-max2 = max(rect_w_list_grp[2])
-range2 = max2 - min2
-step_min = min(range0, range1, range2) / 10
-bins0 = int(range0 / step_min)
-bins1 = int(range1 / step_min)
-bins2 = int(range2 / step_min)
+min_grp = []
+max_grp = []
+range_grp = []
+for w_list in rect_w_list_grp:
+    min_w = min(w_list)
+    max_w = max(w_list)
+    range_w = max_w - min_w
+    min_grp.append(min_w)
+    max_grp.append(max_w)
+    range_grp.append(range_w)
+    
+#min0 = min(rect_w_list_grp[0])
+#max0 = max(rect_w_list_grp[0])
+#range0 = max0 - min0
+#min1 = min(rect_w_list_grp[1])
+#max1 = max(rect_w_list_grp[1])
+#range1 = max1 - min1
+#min2 = min(rect_w_list_grp[2])
+#max2 = max(rect_w_list_grp[2])
+#range2 = max2 - min2
+#step_min = min(range0, range1, range2) / 10
 
-plt.hist(rect_w_list_grp[0], bins=bins0, alpha=0.3, histtype='stepfilled', color='r')
-plt.hist(rect_w_list_grp[1], bins=bins1, alpha=0.3, histtype='stepfilled', color='b')
-plt.hist(rect_w_list_grp[2], bins=bins2, alpha=0.3, histtype='stepfilled', color='g')
+step_min = min(range_grp) / 10
+
+bin_grp = []
+for idx, range_w in enumerate(range_grp):
+    bin_w = int(range_grp[idx] / step_min)
+    bin_grp.append(bin_w)
+#bins0 = int(range0 / step_min)
+#bins1 = int(range1 / step_min)
+#bins2 = int(range2 / step_min)
+
+NUM_COLORS = len(bin_grp)
+colorlist = ['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33', '#a65628', '#f781bf']
+for idx, bin_w in enumerate(bin_grp):
+    color_dat = colorlist[idx % len(colorlist)]
+    plt.hist(rect_w_list_grp[idx], bins=bin_w, alpha=0.3, histtype='stepfilled', color=color_dat)
+#plt.hist(rect_w_list_grp[0], bins=bins0, alpha=0.3, histtype='stepfilled', color='r')
+#plt.hist(rect_w_list_grp[1], bins=bins1, alpha=0.3, histtype='stepfilled', color='b')
+#plt.hist(rect_w_list_grp[2], bins=bins2, alpha=0.3, histtype='stepfilled', color='g')
+plt.xlabel('Intensity Variance')
+plt.ylabel('Frequency')
 plt.show()
+

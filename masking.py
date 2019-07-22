@@ -18,6 +18,14 @@ center = (int(width/2), int(height/2))
 radius = 50
 cv2.circle(bgnd, center, radius, 255, -1)
 result = cv2.bitwise_and(img, bgnd)
+xs = center[0] - radius
+xe = center[0] + radius
+ys = center[1] - radius
+ye = center[1] + radius
+crop = result[ys:ye, xs:xe]
 
-plt.imshow(result)
+size = (224, 224)
+img_resize = cv2.resize(crop, size)
+
+plt.imshow(img_resize)
 plt.show()
