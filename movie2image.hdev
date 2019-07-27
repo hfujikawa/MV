@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hdevelop file_version="1.2" halcon_version="18.11.2.0">
+<procedure name="main">
+<interface/>
+<body>
+<c>*</c>
+<c>* movie2image.hdev</c>
+<c>*</c>
+<l>set_system ('lut_dir', 'jet.lut')</l>
+<l>FilePath := 'D:/test.avi'</l>
+<l>FilePath := 'C:/Users/hfuji/Videos/admt201800136-sup-0004-s4.avi'</l>
+<l>open_framegrabber ('DirectFile', 1, 1, 0, 0, 0, 0, 'default', -1, 'rgb', -1, 'false', FilePath, 'default', -1, -1, AcqHandle)</l>
+<c>* configure visualization</c>
+<l>* MaxImgNum := 60</l>
+<l>get_framegrabber_param (AcqHandle, 'last_frame', MaxImgNum)</l>
+<l>grab_image (Image, AcqHandle)</l>
+<l>get_image_size (Image, Width, Height)</l>
+<l>dev_close_window ()</l>
+<l>dev_open_window (0, 0, Width, Height, 'black', WindowID)</l>
+<l>dev_display (Image)</l>
+<c>* </c>
+<l>dev_update_window ('off')</l>
+<l>dev_update_pc ('off')</l>
+<l>dev_update_var ('off')</l>
+<l>dev_set_lut ('jet')</l>
+<c></c>
+<l>Z_high := 18.0           // Z軸高さ</l>
+<l>D_high := 9.0            // ヘッド移動量</l>
+<l>F_range := [10, 40]     // レーザーOn/Offフレーム番号</l>
+<l>DF_pos := 2.0            // デフォーカス位置</l>
+<c>* １フレームあたりの変位量</c>
+<l>Delta := (Z_high - D_high) / (F_range[1] - F_range[0])</l>
+<c>* デフォーカス位置のフレーム番号</c>
+<l>F_df := DF_pos / Delta + F_range[0]</l>
+<l>tuple_int (F_df, F_df_int)</l>
+<l>Range := [F_df_int-5, F_df_int+5]</l>
+<l>count_seconds (Seconds1)</l>
+<l>for i:=Range[0] to Range[1] by 1</l>
+<l>    set_framegrabber_param (AcqHandle, 'frame_number', i)</l>
+<l>    grab_image (Image, AcqHandle)</l>
+<l>    get_framegrabber_param (AcqHandle, 'frame_number', CurFrameNum)</l>
+<l>    dev_display (Image)</l>
+<l>    OutFname := i$'.4'</l>
+<l>    write_image (Image, 'jpeg 100', 0, OutFname)</l>
+<l>*     wait_seconds (0.5)</l>
+<l>*     write_lut (WindowID, 'lut')</l>
+<l>    stop ()</l>
+<l>endfor</l>
+<l>count_seconds (Seconds2)</l>
+<c></c>
+<l>close_framegrabber (AcqHandle)</l>
+</body>
+<docu id="main">
+<parameters/>
+</docu>
+</procedure>
+</hdevelop>
