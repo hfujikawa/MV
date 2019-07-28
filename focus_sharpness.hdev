@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hdevelop file_version="1.2" halcon_version="18.11.2.0">
+<procedure name="main">
+<interface/>
+<body>
+<c>* This example shows how to measure the sharpness of an image using</c>
+<c>* four characteristic quantities. These are the Blurriness (Auto-Correlation),</c>
+<c>* the  Image Difference of local neighborhoods (Difference), the Gradient</c>
+<c>* and the range of Frequencies in an image (Band pass).</c>
+<c>* These quantities are calculated for a sequence of images, which depict</c>
+<c>* one object in different focal points. At one point the lense is in the right</c>
+<c>* focus, which is also stressed by the peak of the four quantity functions</c>
+<c>* (in the mid of all four functions).</c>
+<c>* </c>
+<c>* original: determine_sharpness.hdev</c>
+<c>*</c>
+<l>dev_update_off ()</l>
+<l>dev_close_window ()</l>
+<c>* </c>
+<l>TargetDir := 'dff/'</l>
+<l>list_image_files (TargetDir, 'png', [], ImageFiles)</l>
+<l>tuple_regexp_select (ImageFiles, 'focus_bga*', Selection)</l>
+<l>* read_image (Image, 'pcb_focus/pcb_focus_telecentric_001')</l>
+<l>read_image (Image, Selection[0])</l>
+<l>get_image_size (Image, Width, Height)</l>
+<l>threshold (Image, Region, 80, 255)</l>
+<l>connection (Region, ConnectedRegions)</l>
+<l>select_shape_std (ConnectedRegions, SelectedRegions, 'max_area', 70)</l>
+<l>area_center (SelectedRegions, Area, Row, Column)</l>
+<l>shape_trans (SelectedRegions, RegionTrans, 'outer_circle')</l>
+<l>elliptic_axis (RegionTrans, Ra, Rb, Phi)</l>
+<l>gen_ellipse (CircleRoi, Row, Column, 2*3.1415, Ra+20, Ra+20)</l>
+<l>dev_close_window ()</l>
+<l>OWFMaxExtent := 600</l>
+<l>dev_open_window_fit_size (0, 0, Width, Height, OWFMaxExtent, OWFMaxExtent, WindowHandle)</l>
+<l>set_display_font (WindowHandle, 14, 'mono', 'true', 'false')</l>
+<c>* </c>
+<c>* Variables to tune sharpness measurement</c>
+<l>Subsampling := 3</l>
+<l>LowerBandPass := 0.1</l>
+<l>UpperBandPass := 0.4</l>
+<l>OffsetRow := 2</l>
+<l>OffsetCol := 2</l>
+<c>* </c>
+<c>* Compute the four quantities of sharpness</c>
+<l>FocusIntensityTuple := []</l>
+<l>FocusLaplaceTuple := []</l>
+<l>FocusAutoCorrelationTuple := []</l>
+<l>FocusBandpassTuple := []</l>
+<l>FocusGradientTuple := []</l>
+<l>FocusDifferenceTuple := []</l>
+<l>* NumImages := 121</l>
+<l>NumImages := |Selection|</l>
+<l>for I := 1 to NumImages by 1</l>
+<l>*     read_image (Image, 'pcb_focus/pcb_focus_telecentric_' + I$'.3d')</l>
+<l>    read_image (Image, 'dff/focus_bga_' + I$'.2d')</l>
+<l>    reduce_domain (Image, CircleRoi, ImageReduced)</l>
+<l>    set_system ('flush_graphic', 'false')</l>
+<l>    dev_display (ImageReduced)</l>
+<l>    disp_message (WindowHandle, 'Measuring Sharpness of Image: ' + I$'03', 'window', 12, 12, 'white', 'false')</l>
+<l>    set_system ('flush_graphic', 'true')</l>
+<l>    disp_line (WindowHandle, -101, -101, -99, -99)</l>
+<l>    intensity (CircleRoi, ImageReduced, Mean, Deviation)</l>
+<l>    FocusIntensityTuple := [FocusIntensityTuple, Deviation*Deviation/150]</l>
+<l>    laplace (ImageReduced, ImageLaplace_3, 'signed', 3, 'n_8_isotropic')</l>
+<l>    intensity (ImageLaplace_3, ImageLaplace_3, Mean, Deviation)</l>
+<l>    FocusLaplaceTuple := [FocusLaplaceTuple, Deviation*Deviation/150]</l>
+<l>*     action_calculate_auto_correlation (ImageReduced, Subsampling, FocusAutoCorrelation)</l>
+<l>*     FocusAutoCorrelationTuple := [FocusAutoCorrelationTuple,FocusAutoCorrelation]</l>
+<l>    action_calculate_bandpass (ImageReduced, LowerBandPass, UpperBandPass, Subsampling, FocusBandpass)</l>
+<l>    FocusBandpassTuple := [FocusBandpassTuple,FocusBandpass]</l>
+<l>    action_calculate_edge_gradient (ImageReduced, FocusGradient)</l>
+<l>    FocusGradientTuple := [FocusGradientTuple,FocusGradient]</l>
+<l>    action_calculate_image_difference (ImageReduced, OffsetRow, OffsetCol, Height, Width, FocusDifference)</l>
+<l>    FocusDifferenceTuple := [FocusDifferenceTuple,FocusDifference]</l>
+<l>endfor</l>
+<c>* </c>
+<c>* Display the four sharpness functions</c>
+<l>dev_display (ImageReduced)</l>
+<l>dev_set_line_width (2)</l>
+<l>* disp_message (WindowHandle, 'Sharpness functions of an image sequence' + '\ntaken with varying focus adjustment', 'window', 12, 72, 'white', 'false')</l>
+<l>set_display_font (WindowHandle, 14, 'mono', 'true', 'false')</l>
+<l>* Colors := ['yellow','magenta','blue','cyan','green','red']</l>
+<l>* disp_message (WindowHandle, ['IntensVar','Laplace','Gradient','Difference','Bandpass','Auto Correlation'], 'window', 72, 72, Colors, 'false')</l>
+<l>* plot_tuple (WindowHandle, [1:NumImages], [FocusIntensityTuple, FocusGradientTuple,FocusDifferenceTuple,FocusBandpassTuple,FocusAutoCorrelationTuple], '\nImage', '', Colors, 'margin_top', 70)</l>
+<l>Colors := ['yellow','magenta','blue','cyan','green']</l>
+<l>disp_message (WindowHandle, ['IntensVar','Laplace','Gradient','Difference','Bandpass'], 'window', 72, 72, Colors, 'false')</l>
+<l>plot_tuple (WindowHandle, [1:NumImages], [FocusIntensityTuple, FocusLaplaceTuple, FocusGradientTuple,FocusDifferenceTuple,FocusBandpassTuple], '\nImage', '', Colors, 'margin_top', 70)</l>
+<l>dev_set_color ('red')</l>
+<c></c>
+</body>
+<docu id="main">
+<parameters/>
+</docu>
+</procedure>
+<procedure name="action_calculate_auto_correlation">
+<interface>
+<io>
+<par name="Image" base_type="iconic" dimension="0"/>
+</io>
+<ic>
+<par name="Subsampling" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="Sharpness" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>Scale := 1. / Subsampling</l>
+<l>zoom_image_factor (Image, ImageZoomed, Scale, Scale, 'constant')</l>
+<l>get_image_size (ImageZoomed, Width, Height)</l>
+<l>rft_generic (ImageZoomed, ImageFFT, 'to_freq', 'none', 'complex', Width)</l>
+<l>correlation_fft (ImageFFT, ImageFFT, ImageCorrelation)</l>
+<l>rft_generic (ImageCorrelation, ImageFFTInv, 'from_freq', 'n', 'real', Width)</l>
+<l>get_grayval (ImageFFTInv, [0,1,Height - 1,Height - 2], [1,0,Width - 2,Width - 1], SumCorrelation)</l>
+<l>intensity (ImageZoomed, ImageZoomed, Mean, Deviation)</l>
+<l>Bluriness := (SumCorrelation / (Width * Height) - Mean * Mean) / (Deviation * Deviation)</l>
+<l>Sharpness := (1000.0 - min(Bluriness) * 1000.0) / 40.0</l>
+<l>return ()</l>
+</body>
+<docu id="action_calculate_auto_correlation">
+<parameters>
+<parameter id="Image"/>
+<parameter id="Sharpness"/>
+<parameter id="Subsampling"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="action_calculate_bandpass">
+<interface>
+<io>
+<par name="Image" base_type="iconic" dimension="0"/>
+</io>
+<ic>
+<par name="LowerBandPass" base_type="ctrl" dimension="0"/>
+<par name="UpperBandPass" base_type="ctrl" dimension="0"/>
+<par name="Subsampling" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="Mean" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>get_image_size (Image, Width, Height)</l>
+<l>Scale := 1. / Subsampling</l>
+<l>gen_circle (InnerBandpass, 0, 0, Scale * LowerBandPass * min([Height,Width]))</l>
+<l>gen_circle (OuterBandpass, 0, 0, Scale * UpperBandPass * min([Height,Width]))</l>
+<l>difference (OuterBandpass, InnerBandpass, Bandpass1)</l>
+<l>gen_circle (InnerBandpass, Scale * Height, 0, Scale * LowerBandPass * min([Height,Width]))</l>
+<l>gen_circle (OuterBandpass, Scale * Height, 0, Scale * UpperBandPass * min([Height,Width]))</l>
+<l>difference (OuterBandpass, InnerBandpass, Bandpass2)</l>
+<l>union2 (Bandpass1, Bandpass2, Bandpass)</l>
+<l>zoom_image_factor (Image, ImageZoomed, Scale, Scale, 'constant')</l>
+<l>rft_generic (ImageZoomed, ImageFFT, 'to_freq', 'sqrt', 'complex', Scale * Width)</l>
+<l>power_real (ImageFFT, ImageResult)</l>
+<l>intensity (Bandpass, ImageResult, Mean, Deviation)</l>
+<l>Mean := Mean / 2.0</l>
+<l>return ()</l>
+</body>
+<docu id="action_calculate_bandpass">
+<parameters>
+<parameter id="Image"/>
+<parameter id="LowerBandPass"/>
+<parameter id="Mean"/>
+<parameter id="Subsampling"/>
+<parameter id="UpperBandPass"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="action_calculate_edge_gradient">
+<interface>
+<io>
+<par name="Image" base_type="iconic" dimension="0"/>
+</io>
+<oc>
+<par name="Mean" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>sobel_amp (Image, EdgeAmplitude, 'sum_abs', 3)</l>
+<l>intensity (EdgeAmplitude, EdgeAmplitude, Mean, Deviation)</l>
+<l>return ()</l>
+</body>
+<docu id="action_calculate_edge_gradient">
+<parameters>
+<parameter id="Image"/>
+<parameter id="Mean"/>
+</parameters>
+</docu>
+</procedure>
+<procedure name="action_calculate_image_difference">
+<interface>
+<io>
+<par name="Image" base_type="iconic" dimension="0"/>
+</io>
+<ic>
+<par name="OffsetRow" base_type="ctrl" dimension="0"/>
+<par name="OffsetCol" base_type="ctrl" dimension="0"/>
+<par name="Height" base_type="ctrl" dimension="0"/>
+<par name="Width" base_type="ctrl" dimension="0"/>
+</ic>
+<oc>
+<par name="Difference" base_type="ctrl" dimension="0"/>
+</oc>
+</interface>
+<body>
+<l>tile_images_offset (Image, TiledImage, abs(OffsetRow), abs(OffsetCol), 0, 0, Height - 1, Width - 1, Width, Height)</l>
+<l>convert_image_type (TiledImage, TiledImage, 'int2')</l>
+<l>convert_image_type (Image, ImageConverted, 'int2')</l>
+<l>sub_image (TiledImage, ImageConverted, ImageSub, 1, 0)</l>
+<l>abs_image (ImageSub, ImageAbs)</l>
+<l>intensity (ImageAbs, ImageAbs, Difference, Deviation)</l>
+<l>return ()</l>
+</body>
+<docu id="action_calculate_image_difference">
+<parameters>
+<parameter id="Difference"/>
+<parameter id="Height"/>
+<parameter id="Image"/>
+<parameter id="OffsetCol"/>
+<parameter id="OffsetRow"/>
+<parameter id="Width"/>
+</parameters>
+</docu>
+</procedure>
+</hdevelop>
