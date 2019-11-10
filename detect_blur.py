@@ -75,3 +75,4 @@ plt.show()
 sns.distplot(fmlist, kde=False, rug=False, bins=10) 
 sns.distplot(dmlist, kde=False, rug=False, bins=10) 
 
+plt.scatter(fmlist, dmlist)
