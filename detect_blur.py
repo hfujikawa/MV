@@ -22,7 +22,7 @@ def average_grad_mag(image):
 	sharpness = np.average(gnorm)
 	return sharpness
 
-target_dir = 'C:/Users/Public/Documents/MVTec/HALCON-18.11-Steady/examples/images/dff/focus_bga'
+target_dir = 'C:/Users/Public/Documents/MVTec/HALCON-11.0/examples/images/dff/focus_bga'
 images_list = glob.glob(target_dir + '*.png')
 
 fmlist = []
